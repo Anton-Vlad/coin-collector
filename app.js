@@ -53,17 +53,60 @@ function createName() {
 (function () {
 
     let playerId;
-    let playerRef;
-    let playerElements = {};
+    let playerRef;  // our firebase refs, to interact with firebase
+    let players = {};  // local list of state, of where the players are on the oage
+    let playerElements = {};  // list of references to the actual dom elements
 
     const gameContainer = document.querySelector(".game-container");
 
+    function handleArrowPress(xChange=0, yChange=0) {
+        const newX = players[playerId].x + xChange;
+        const newY = players[playerId].y + yChange;
+        if (true) {  // can I move
+            // move to the next space
+            players[playerId].x = newX
+            players[playerId].y = newY
+            if (xChange === 1) {
+                players[playerId].direction = "right"
+            }
+            if (xChange === -1) {
+                players[playerId].direction = "left"
+            }
+
+            // tell firebase the new changes
+            playerRef.set(players[playerId])
+        }
+    }
+
     function initGame() {
+
+        new KeyPressListener("ArrowUp", () => handleArrowPress(0, -1))
+        new KeyPressListener("ArrowDown", () => handleArrowPress(0, 1))
+        new KeyPressListener("ArrowLeft", () => handleArrowPress(-1, 0))
+        new KeyPressListener("ArrowRight", () => handleArrowPress(1, 0))
+
         const allPlayersRef = firebase.database().ref(`players`);
         const allCoinsRef = firebase.database().ref(`coins`);
 
         allPlayersRef.on("value", (snapshot) => {
             // Fires whenever changes occurs
+            players = snapshot.val() || {};
+
+            Object.keys(players).forEach((key) => {
+                const characterState = players[key];
+                let el = playerElements[key];
+
+                // Update the DOM
+                el.querySelector(".Character_name").innerHTML = characterState.name;
+                el.querySelector(".Character_coins").innerHTML = characterState.coins;
+                el.setAttribute("data-color", characterState.color);
+                el.setAttribute("data-direction", characterState.direction);
+
+                const left = 16 * characterState.x + "px"; // grid size = 16
+                const top = 16 * characterState.y - 4 + "px";
+                el.style.transform = `translate3d(${left}, ${top}, 0)`;
+            })
+
         });
         allPlayersRef.on("child_added", (snapshot) => {
             // Fires whenever a new node is added the tree
@@ -100,6 +143,10 @@ function createName() {
             gameContainer.appendChild(characterElement)
 
         })
+
+        allPlayersRef.on("child_removed", (snapshot) => {
+
+        });
     }
 
     firebase.auth().onAuthStateChanged((user) => {
@@ -118,7 +165,7 @@ function createName() {
                 direction: "right",
                 color: randomFromArray(playerColors),
                 x: 3,
-                y: 3,
+                y: 10,
                 coins: 0,
             })
 
