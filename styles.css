@@ -76,17 +76,17 @@ button:active {
     position: absolute;
     width: 16px;
     height: 16px;
-  }
-  .Character {
+}
+.Character {
     transition: transform 0.4s;
-  }
-  .Character.you {
+}
+.Character.you {
     z-index: 1;
-  }
-  .Character.you .Character_you-arrow {
+}
+.Character.you .Character_you-arrow {
     display: block;
-  }
-  .Character_you-arrow {
+}
+.Character_you-arrow {
     display: none;
     position: absolute;
     top:-18px;
@@ -95,34 +95,34 @@ button:active {
     height: 5px;
     background: url(/images/arrow.png) no-repeat no-repeat;
   }
-  .Character_sprite {
+.Character_sprite {
     overflow: hidden;
     top: -3px;
     background: url(/images/characters.png);
-  }
-  .Character[data-direction="right"] .Character_sprite {
+}
+.Character[data-direction="right"] .Character_sprite {
     background-position-x: 16px;
-  }
-  .Character[data-color="red"] .Character_sprite {
+}
+.Character[data-color="red"] .Character_sprite {
     background-position-y: -16px;
-  }
-  .Character[data-color="orange"] .Character_sprite {
+}
+.Character[data-color="orange"] .Character_sprite {
     background-position-y: -32px;
-  }
-  .Character[data-color="yellow"] .Character_sprite {
+}
+.Character[data-color="yellow"] .Character_sprite {
     background-position-y: -48px;
-  }
-  .Character[data-color="green"] .Character_sprite {
+}
+.Character[data-color="green"] .Character_sprite {
     background-position-y: -64px;
-  }
-  .Character[data-color="purple"] .Character_sprite {
+}
+.Character[data-color="purple"] .Character_sprite {
     background-position-y: -80px;
-  }
-  .Character_shadow {
+}
+.Character_shadow {
     background: url(/images/shadow.png) no-repeat no-repeat;
-  }
+}
   
-  .Character_name-container {
+.Character_name-container {
     position: absolute;
     top: -12px;
     left: -5px;
@@ -134,8 +134,21 @@ button:active {
     font-weight: bold;
     text-transform: uppercase;
     white-space: nowrap;
-  }
-  .Character_coins {
+}
+.Character_coins {
     margin-left: 1px;
     color: gold;
-  }
+}
+
+  /* Coins */
+.Coin_sprite {
+    background: url(/images/coin.png) no-repeat no-repeat;
+    animation: coinFloat 0.8s linear infinite alternate-reverse;
+}
+@keyframes coinFloat {
+    from { transform: translateY(0) }
+    to { transform: translateY(5px) }
+}
+.Coin_shadow {
+    background: url(/images/coin-shadow.png) no-repeat no-repeat;
+}
