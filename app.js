@@ -1,6 +1,30 @@
+const mapData = {
+    sizeX: 16,
+    sizeY: 16,
+    minX: 1,
+    maxX: 14,
+    minY: 4,
+    maxY: 12,
+    blockedSpaces: {
+      "7x4": true,
+      "1x11": true,
+      "12x10": true,
+      "4x7": true,
+      "5x7": true,
+      "6x7": true,
+      "8x6": true,
+      "9x6": true,
+      "10x6": true,
+      "7x9": true,
+      "8x9": true,
+      "9x9": true,
+    },
+};
+
 
 // Options for Player Colors... these are in the same order as our sprite sheet
 const playerColors = ["blue", "red", "orange", "yellow", "green", "purple"];
+const playerColorCodes = ["#9BF1FF", "#F08FD1", "#FF7E65", "#FFE365", "#A7FF65", "#B18AFF"];
 
 //Misc Helpers
 function randomFromArray(array) {
@@ -47,7 +71,49 @@ function createName() {
       "BUG",
     ]);
     return `${prefix} ${animal}`;
-  }
+}
+
+function getRandomSafeSpot() {
+    //We don't look things up by key here, so just return an x/y
+    return randomFromArray([
+      { x: 1, y: 4 },
+      { x: 2, y: 4 },
+      { x: 1, y: 5 },
+      { x: 2, y: 6 },
+      { x: 2, y: 8 },
+      { x: 2, y: 9 },
+      { x: 4, y: 8 },
+      { x: 5, y: 5 },
+      { x: 5, y: 8 },
+      { x: 5, y: 10 },
+      { x: 5, y: 11 },
+      { x: 11, y: 7 },
+      { x: 12, y: 7 },
+      { x: 13, y: 7 },
+      { x: 13, y: 6 },
+      { x: 13, y: 8 },
+      { x: 7, y: 6 },
+      { x: 7, y: 7 },
+      { x: 7, y: 8 },
+      { x: 8, y: 8 },
+      { x: 10, y: 8 },
+      { x: 8, y: 8 },
+      { x: 11, y: 4 },
+    ]);
+}
+
+function isSolid(x,y) {
+
+    const blockedNextSpace = mapData.blockedSpaces[getKeyString(x, y)];
+    return (
+      blockedNextSpace ||
+      x >= mapData.maxX ||
+      x < mapData.minX ||
+      y >= mapData.maxY ||
+      y < mapData.minY
+    )
+}
+
 
 
 (function () {
@@ -56,13 +122,17 @@ function createName() {
     let playerRef;  // our firebase refs, to interact with firebase
     let players = {};  // local list of state, of where the players are on the oage
     let playerElements = {};  // list of references to the actual dom elements
+    let coins = {};
+    let coinElements = {};
 
     const gameContainer = document.querySelector(".game-container");
+    const playerNameInput = document.querySelector("#player-name");
+    const playerColorButton = document.querySelector("#player-color");
 
     function handleArrowPress(xChange=0, yChange=0) {
         const newX = players[playerId].x + xChange;
         const newY = players[playerId].y + yChange;
-        if (true) {  // can I move
+        if (!isSolid(newX, newY)) {  // can I move
             // move to the next space
             players[playerId].x = newX
             players[playerId].y = newY
@@ -103,7 +173,7 @@ function createName() {
                 el.setAttribute("data-direction", characterState.direction);
 
                 const left = 16 * characterState.x + "px"; // grid size = 16
-                const top = 16 * characterState.y - 4 + "px";
+                const top = 16 * characterState.y - 2 + "px";
                 el.style.transform = `translate3d(${left}, ${top}, 0)`;
             })
 
@@ -137,7 +207,7 @@ function createName() {
             characterElement.setAttribute("data-direction", addedPlayer.direction);
             
             const left = 16 * addedPlayer.x + "px"; // grid size = 16
-            const top = 16 * addedPlayer.y - 4 + "px";
+            const top = 16 * addedPlayer.y - 2 + "px";
             characterElement.style.transform = `translate3d(${left}, ${top}, 0)`;
 
             gameContainer.appendChild(characterElement)
@@ -150,6 +220,27 @@ function createName() {
             gameContainer.removeChild(playerElements[removedKey]);
             delete playerElements[removedKey]
         });
+
+        //Updates player name with text input
+        playerNameInput.addEventListener("change", (e) => {
+            const newName = e.target.value || createName();
+            playerNameInput.value = newName;
+            playerRef.update({
+                name: newName
+            })
+        })
+    
+        //Update player color on button click
+        playerColorButton.addEventListener("click", () => {
+            const mySkinIndex = playerColors.indexOf(players[playerId].color);
+            const nextColor = playerColors[mySkinIndex + 1] || playerColors[0];
+            const nextColorCode = playerColorCodes[mySkinIndex + 1] || playerColorCodes[0];
+            playerRef.update({
+                color: nextColor
+            })
+
+            playerColorButton.style.background = nextColorCode;
+        })
     }
 
     firebase.auth().onAuthStateChanged((user) => {
@@ -160,17 +251,25 @@ function createName() {
             playerId = user.uid;
             playerRef = firebase.database().ref(`players/${playerId}`)
 
-            const name = createName()
+            const name = createName();
+            const {x, y} = getRandomSafeSpot();
+            const color = randomFromArray(playerColors);
+            const mySkinIndexAuc = playerColors.indexOf(color);
+
+            playerNameInput.value = name
 
             playerRef.set({
                 id: playerId,
                 name,
                 direction: "right",
-                color: randomFromArray(playerColors),
-                x: 3,
-                y: 10,
+                color,
+                x,
+                y,
                 coins: 0,
             })
+
+            playerColorButton.style.background = playerColorCodes[mySkinIndexAuc];
+            playerColorButton.style.opacity = '1';
 
             // Remove me from Firebase when I disconnect
             playerRef.onDisconnect().remove();
